@@ -4,62 +4,89 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
+	<parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent</artifactId>
         <version>3</version>
+        <relativePath/>
     </parent>
-
     <artifactId>powsybl-cgmes-conformity-assesments</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<modules>
+        <module>cgmes-conformity</module>
+        <module>cgmes-validation</module>
+        <module>distribution-validation</module>
+    </modules>
 
     <properties>
+        <autoservice.version>1.0-rc2</autoservice.version>
         <jimfs.version>1.1</jimfs.version>
         <junit.version>4.12</junit.version>
         <logback.version>1.1.8</logback.version>
+        <poi.version>4.1.2</poi.version>
+        <slf4j.version>1.7.22</slf4j.version>
         <xmlunit.version>2.3.0</xmlunit.version>
 
         <powsyblcore.version>3.4.0</powsyblcore.version>
+        <powsybl.open-loadflow.version>0.4.0</powsybl.open-loadflow.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
-            <version>${jimfs.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-cgmes-conversion</artifactId>
-            <version>${powsyblcore.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-triple-store-impl-rdf4j</artifactId>
-            <version>${powsyblcore.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.xmlunit</groupId>
-            <artifactId>xmlunit-core</artifactId>
-            <version>${xmlunit.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+	
+    <profiles>
+        <profile>
+            <id>checks</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>${maven.checkstyle.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <configLocation>checkstyle.xml</configLocation>
+                                    <consoleOutput>true</consoleOutput>
+                                    <failsOnError>true</failsOnError>
+                                    <excludes>**/generated/**/*</excludes>
+                                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>${maven.enforcer.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <fail>false</fail>
+                                    <rules>
+                                        <dependencyConvergence/>
+                                        <requireMavenVersion>
+                                            <version>${maven.core.version}</version>
+                                        </requireMavenVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
 

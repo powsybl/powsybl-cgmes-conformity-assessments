@@ -1,4 +1,7 @@
 # Maven projects
+/cgmes-conformity/target/
+/cgmes-validation/target/
+/distribution-validation/target/
 target/
 
 # IntelliJ
