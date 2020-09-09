@@ -13,6 +13,7 @@
     <artifactId>powsybl-cgmes-validation</artifactId>
 
     <dependencies>
+        <!-- Compilation dependencies -->
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>

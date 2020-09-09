@@ -53,7 +53,7 @@ public final class SvUtils {
         FileInputStream fileInputStream = new FileInputStream(zipPackage);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
         try (ZipInputStream zin = new ZipInputStream(bufferedInputStream)) {
-            ZipEntry ze = null;
+            ZipEntry ze;
             while ((ze = zin.getNextEntry()) != null) {
                 if (ze.getName().contains("_SV_")) {
                     String svFile = extractDest + separator + ze.getName();
@@ -68,7 +68,7 @@ public final class SvUtils {
                 }
             }
         }
-        throw new PowsyblException("SV File not found");
+        throw new PowsyblException("SV File not found in case file " + zipPackage);
     }
 
     public static void compareSV(Network network, String baseName, String provider, SXSSFWorkbook wb) throws IOException {
@@ -92,38 +92,42 @@ public final class SvUtils {
                 }
             }
         }
-        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("datafiles"), baseName, results, (quintuplet, p) -> {
-            quintuplet.v1 = p.asDouble(XlsUtils.V);
-            quintuplet.angle1 = p.asDouble(XlsUtils.ANGLE);
-        });
-        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SSH"), baseName, results, (quintuplet, p) -> {
-            quintuplet.v2 = p.asDouble(XlsUtils.V);
-            quintuplet.angle2 = p.asDouble(XlsUtils.ANGLE);
-        });
-        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SSH"), baseName, results, (quintuplet, p) -> {
-            quintuplet.v3 = p.asDouble(XlsUtils.V);
-            quintuplet.angle3 = p.asDouble(XlsUtils.ANGLE);
-            if (p.asDouble(XlsUtils.ANGLE) == 0) {
-                XlsUtils.getDiffAngle()[0] = quintuplet.angle3 - quintuplet.angle2;
-            }
-        });
-        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SV"), baseName, results, (quintuplet, p) -> {
-            quintuplet.v4 = p.asDouble(XlsUtils.V);
-            quintuplet.angle4 = p.asDouble(XlsUtils.ANGLE);
-        });
-        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SV"), baseName, results, (quintuplet, p) -> {
-            quintuplet.v5 = p.asDouble(XlsUtils.V);
-            quintuplet.angle5 = p.asDouble(XlsUtils.ANGLE);
-            if (p.asDouble(XlsUtils.ANGLE) == 0) {
-                XlsUtils.getDiffAngle()[1] = quintuplet.angle5 - quintuplet.angle4;
-            }
-        });
+        addFiles(baseName, results);
         XlsUtils.writeCompareSVResults(wb, results, provider);
         FileUtils.deleteDirectory(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("datafiles").toFile());
         FileUtils.deleteDirectory(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SSH").toFile());
         FileUtils.deleteDirectory(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SSH").toFile());
         FileUtils.deleteDirectory(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SV").toFile());
         FileUtils.deleteDirectory(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SV").toFile());
+    }
+
+    private static void addFiles(String baseName, Map<String, Quintuplet> results) {
+        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("datafiles"), baseName, results, (quintuplet, p) -> {
+            quintuplet.v[0] = p.asDouble(XlsUtils.V);
+            quintuplet.angle[0] = p.asDouble(XlsUtils.ANGLE);
+        });
+        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SSH"), baseName, results, (quintuplet, p) -> {
+            quintuplet.v[1] = p.asDouble(XlsUtils.V);
+            quintuplet.angle[1] = p.asDouble(XlsUtils.ANGLE);
+        });
+        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SSH"), baseName, results, (quintuplet, p) -> {
+            quintuplet.v[2] = p.asDouble(XlsUtils.V);
+            quintuplet.angle[2] = p.asDouble(XlsUtils.ANGLE);
+            if (p.asDouble(XlsUtils.ANGLE) == 0) {
+                XlsUtils.getDiffAngle()[0] = quintuplet.angle[2] - quintuplet.angle[1];
+            }
+        });
+        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postImport_SV"), baseName, results, (quintuplet, p) -> {
+            quintuplet.v[3] = p.asDouble(XlsUtils.V);
+            quintuplet.angle[3] = p.asDouble(XlsUtils.ANGLE);
+        });
+        addFile(Paths.get(CgmesValidationTool.WORKING_DIR).resolve("postLF_SV"), baseName, results, (quintuplet, p) -> {
+            quintuplet.v[4] = p.asDouble(XlsUtils.V);
+            quintuplet.angle[4] = p.asDouble(XlsUtils.ANGLE);
+            if (p.asDouble(XlsUtils.ANGLE) == 0) {
+                XlsUtils.getDiffAngle()[1] = quintuplet.angle[4] - quintuplet.angle[3];
+            }
+        });
     }
 
     private static void addFile(Path folder, String file, Map<String, Quintuplet> results, BiConsumer<Quintuplet, PropertyBag> consumer) {
@@ -140,16 +144,8 @@ public final class SvUtils {
         String busId = "";
         String equipmentId = "";
         int connectedComponentNumber = 0;
-        double v1 = Double.NaN;
-        double v2 = Double.NaN;
-        double v3 = Double.NaN;
-        double v4 = Double.NaN;
-        double v5 = Double.NaN;
-        double angle1 = Double.NaN;
-        double angle2 = Double.NaN;
-        double angle3 = Double.NaN;
-        double angle4 = Double.NaN;
-        double angle5 = Double.NaN;
+        double[] v = {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+        double[] angle = {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
     }
 
     public static void writeSvFile(Network network, String version, Writer writer) throws IOException {
@@ -204,14 +200,14 @@ public final class SvUtils {
     private static void writeAngleTension(CgmesModelExtension cgmesModelExtension, CgmesConversionContextExtension cgmesTerminalMappingExtension, Writer writer) throws IOException {
         int counter = 0;
         for (PropertyBag p : cgmesModelExtension.getCgmesModel().topologicalNodes()) {
-            Terminal t = cgmesTerminalMappingExtension.getContext().terminalMapping().findFromTopologicalNode(p.getId("TopologicalNode"));
+            Terminal t = cgmesTerminalMappingExtension.getContext().terminalMapping().findFromTopologicalNode(p.getId(TOPOLOGICAL_NODE));
             if (t != null) {
                 Bus bus = t.getBusBreakerView().getConnectableBus();
                 if (bus != null) {
                     writer.write(String.format("  <cim:SvVoltage rdf:ID=\"%d\">%n", counter));
                     writer.write(String.format("    <cim:SvVoltage.angle>%s</cim:SvVoltage.angle>%n", NumberFormat.getInstance(Locale.US).format(bus.getAngle())));
                     writer.write(String.format("    <cim:SvVoltage.v>%s</cim:SvVoltage.v>%n", NumberFormat.getInstance(Locale.US).format(bus.getV())));
-                    writer.write(String.format("    <cim:SvVoltage.TopologicalNode rdf:resource=\"#%s\" />%n", p.getId("TopologicalNode")));
+                    writer.write(String.format("    <cim:SvVoltage.TopologicalNode rdf:resource=\"#%s\" />%n", p.getId(TOPOLOGICAL_NODE)));
                     writer.write("  </cim:SvVoltage>\n");
                     counter++;
                 }

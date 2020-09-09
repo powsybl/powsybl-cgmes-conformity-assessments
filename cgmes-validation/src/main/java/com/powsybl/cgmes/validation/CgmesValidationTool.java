@@ -127,10 +127,8 @@ public class CgmesValidationTool implements Tool {
         Path dataSetFolder = context.getFileSystem().getPath(line.getOptionValue(DATASET_PATH));
         String resultFolder = line.getOptionValue(RESULT_PATH);
         String exploitedHour = "_" + line.getOptionValue(EXPLOITED_HOUR) + "_";
-        String resultFileName = "Results.xlsx";
-        if (line.hasOption(RESULT_FILENAME)) {
-            resultFileName = line.getOptionValue(RESULT_FILENAME) + ".xlsx";
-        }
+        String resultFileName = Optional.ofNullable(line.getOptionValue(RESULT_FILENAME)).orElse("Results")  + ".xlsx";
+
         inputParams = readProperties(line, ConversionToolUtils.OptionType.IMPORT, context);
 
         try (SXSSFWorkbook wb = new SXSSFWorkbook()) {
@@ -181,18 +179,20 @@ public class CgmesValidationTool implements Tool {
                 result.put(ERROR_KEY, cme.getMessage());
             }
         } else {
-            result.put(ERROR_KEY, "SV file not found");
+            result.put(ERROR_KEY, "SV file not found for the provider " + provider);
             return;
         }
 
         inputParams.setProperty(CgmesImport.PROFILE_USED_FOR_INITIAL_STATE_VALUES, "SSH");
-        Network network = null;
-        Network networkPI = null;
 
+        Network network;
+        Network networkPI;
+        String filename;
         try {
-            assert svFile != null;
-            network = CgmesUtils.importFile(skipPostProc, caseFile, svFile.getFileName().toString(), true, inputParams, context);
-            networkPI = CgmesUtils.importFile(skipPostProc, caseFile, svFile.getFileName().toString(), false, inputParams, context);
+            Objects.requireNonNull(svFile, "SV file is null");
+            filename = svFile.getFileName().toString();
+            network = CgmesUtils.importFile(skipPostProc, caseFile, filename, true, inputParams, context);
+            networkPI = CgmesUtils.importFile(skipPostProc, caseFile, filename, false, inputParams, context);
 
             network.getVoltageLevelStream().findFirst().ifPresent(vl -> result.put(TOPOLOGY_KEY, vl.getTopologyKind().toString()));
         } catch (Exception e) {
@@ -201,7 +201,7 @@ public class CgmesValidationTool implements Tool {
         }
 
         try {
-            LoadFlowResult lfResult = CgmesUtils.runLoadFlow(network, svFile.getFileName().toString(), inputParams, line, context);
+            LoadFlowResult lfResult = CgmesUtils.runLoadFlow(network, filename, inputParams, line, context);
             result.put(LOADFLOW_KEY, lfResult.getMetrics().get("network_0_status"));
         } catch (Exception e) {
             result.put(ERROR_KEY, "error during loadflow SSH");
@@ -209,19 +209,19 @@ public class CgmesValidationTool implements Tool {
 
         inputParams.setProperty(CgmesImport.PROFILE_USED_FOR_INITIAL_STATE_VALUES, "SV");
         try {
-            network = CgmesUtils.importFile(skipPostProc, caseFile, svFile.getFileName().toString(), true, inputParams, context);
+            network = CgmesUtils.importFile(skipPostProc, caseFile, filename, true, inputParams, context);
         } catch (Exception e) {
-            result.put(ERROR_KEY, "error during cgmes import SSH");
+            result.put(ERROR_KEY, "error during cgmes import SV");
             return;
         }
 
         try {
-            LoadFlowResult lfResult = CgmesUtils.runLoadFlow(network, svFile.getFileName().toString(), inputParams, line, context);
+            LoadFlowResult lfResult = CgmesUtils.runLoadFlow(network, filename, inputParams, line, context);
             result.put(LOADFLOW_KEY, lfResult.getMetrics().get("network_0_status"));
         } catch (Exception e) {
             result.put(ERROR_KEY, "error during loadflow SV");
         }
 
-        SvUtils.compareSV(networkPI, svFile.getFileName().toString(), provider, wb);
+        SvUtils.compareSV(networkPI, filename, provider, wb);
     }
 }

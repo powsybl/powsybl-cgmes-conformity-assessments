@@ -158,96 +158,48 @@ public final class XlsUtils {
             currentRow.createCell(cellNum++).setCellValue(quintuplet.busId);
             currentRow.createCell(cellNum++).setCellValue(quintuplet.equipmentId);
             currentRow.createCell(cellNum++).setCellValue(quintuplet.connectedComponentNumber);
-            if (Double.isNaN(quintuplet.v1)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.v1);
-            }
-            if (Double.isNaN(quintuplet.v2)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.v2);
-            }
-            if (Double.isNaN(quintuplet.v3)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.v3);
-            }
-            if (Double.isNaN(quintuplet.v4)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.v4);
-            }
-            if (Double.isNaN(quintuplet.v5)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.v5);
-            }
-            if (Double.isNaN(quintuplet.angle1)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.angle1);
-            }
-            if (Double.isNaN(quintuplet.angle2)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.angle2);
-            }
-            if (Double.isNaN(quintuplet.angle3)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.angle3);
-            }
-            if (Double.isNaN(quintuplet.angle4)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.angle4);
-            }
-            if (Double.isNaN(quintuplet.angle5)) {
-                cellNum++;
-            } else {
-                currentRow.createCell(cellNum++).setCellValue(quintuplet.angle5);
-            }
-            if (!Double.isNaN(quintuplet.v1) && !Double.isNaN(quintuplet.v2)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.v2 - quintuplet.v1));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.v1) && !Double.isNaN(quintuplet.v3)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.v3 - quintuplet.v1));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.v1) && !Double.isNaN(quintuplet.v4)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.v4 - quintuplet.v1));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.v1) && !Double.isNaN(quintuplet.v5)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.v5 - quintuplet.v1));
-            } else {
-                cellNum++;
-            }
 
-            if (!Double.isNaN(quintuplet.angle1) && !Double.isNaN(quintuplet.angle2)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.angle2 - quintuplet.angle1));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.angle1) && !Double.isNaN(quintuplet.angle3)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.angle3 - quintuplet.angle1 - diffAngle[0]));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.angle1) && !Double.isNaN(quintuplet.angle4)) {
-                currentRow.createCell(cellNum++).setCellValue(Math.abs(quintuplet.angle4 - quintuplet.angle1));
-            } else {
-                cellNum++;
-            }
-            if (!Double.isNaN(quintuplet.angle1) && !Double.isNaN(quintuplet.angle5)) {
-                currentRow.createCell(cellNum).setCellValue(Math.abs(quintuplet.angle5 - quintuplet.angle1 - diffAngle[1]));
-            }
+            createDoubleCell(currentRow, cellNum++, quintuplet.v[0]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.v[1]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.v[2]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.v[3]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.v[4]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.angle[0]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.angle[1]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.angle[2]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.angle[3]);
+            createDoubleCell(currentRow, cellNum++, quintuplet.angle[4]);
+
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.v[1], quintuplet.v[0]);
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.v[2], quintuplet.v[0]);
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.v[3], quintuplet.v[0]);
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.v[4], quintuplet.v[0]);
+
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.angle[1], quintuplet.angle[0]);
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.angle[2], quintuplet.angle[0], diffAngle[0]);
+            createDoubleDiffCell(currentRow, cellNum++, quintuplet.angle[3], quintuplet.angle[0]);
+            createDoubleDiffCell(currentRow, cellNum, quintuplet.angle[4], quintuplet.angle[0], diffAngle[1]);
         });
+    }
+
+    private static void createDoubleCell(XSSFRow currentRow, int cellNum, double val) {
+        if (!Double.isNaN(val)) {
+            currentRow.createCell(cellNum).setCellValue(val);
+        }
+    }
+
+    private static void createDoubleDiffCell(XSSFRow currentRow, int cellNum, double val, double... minValues) {
+        if (Double.isNaN(val)) {
+            return;
+        }
+        double value = val;
+        for (double min : minValues) {
+            if (Double.isNaN(min)) {
+                return;
+            }
+            value = value - min;
+        }
+        createDoubleCell(currentRow, cellNum, Math.abs(value));
     }
 
     private XlsUtils() {

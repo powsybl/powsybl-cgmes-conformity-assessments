@@ -45,7 +45,7 @@ public final class CgmesUtils {
         }
         Network network = Importers.loadNetwork(caseFile, context.getShortTimeExecutionComputationManager(), importConfig, inputParams);
         if (network == null) {
-            throw new PowsyblException("import fail");
+            throw new PowsyblException("Fail to import Network from file " + caseFile.toString());
         }
 
         if (writeFile) {
